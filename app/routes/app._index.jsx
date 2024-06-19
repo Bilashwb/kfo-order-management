@@ -19,7 +19,7 @@ export default function page() {
   const submit = useSubmit();
   return (
     <Page>
-      Testing Page
+     KFO Order Management  Custom App
     </Page>
   );
 }
