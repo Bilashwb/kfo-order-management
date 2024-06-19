@@ -13,7 +13,7 @@ import {
   export default function Index() {
     return (
       <Page>
-        <TitleBar title="Order Page" />
+        <TitleBar title="Customer Page" />
           <Text>Recent Customer Ui</Text>
       </Page>
     );

@@ -13,7 +13,7 @@ import {
   export default function Index() {
     return (
       <Page>
-        <TitleBar title="Order Page" />
+        <TitleBar title="Notification Page" />
           <Text>Recent Notification Ui</Text>
       </Page>
     );
