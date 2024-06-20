@@ -30,3 +30,27 @@ model Session {
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
 }
+
+
+model LineItem {
+  id            Int      @id @default(autoincrement())
+  lineItemId    String?
+  inventoryType String?
+  orderId       String?
+  status        String?
+  promiseDate   String?
+  reciveStock   String?
+  readyDate     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Comments {
+  id         Int      @id @default(autoincrement())
+  lineItemId String?
+  orderId    String?
+  admin      Boolean  @default(false)
+  message    String?
+  createdAt  DateTime @default(now())
+  read       Boolean  @default(false)
+}
