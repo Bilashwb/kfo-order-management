@@ -75,7 +75,7 @@ export default function LineItem({ data }) {
               source={
                 data.variant.image
                   ? data.variant.image.url
-                  : data.product.featuredImage.url
+                  : data.product.featuredImage?data.product.featuredImage.url:""
               }
             />
             <Text>
