@@ -1,6 +1,14 @@
 import { useLoaderData, useSubmit, useActionData } from "@remix-run/react";
-import { Button, Card, Layout, Page, Listbox, Spinner, Grid } from "@shopify/polaris";
-import { useState, useCallback, useEffect } from 'react';
+import {
+  Button,
+  Card,
+  Layout,
+  Page,
+  Listbox,
+  Spinner,
+  Grid,
+} from "@shopify/polaris";
+import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import LineItem from "../components/LineItem";
@@ -8,21 +16,25 @@ import LineItem from "../components/LineItem";
 export async function loader({ request, params }) {
   try {
     const { admin, session } = await authenticate.admin(request);
-    const lineItem=await db.lineItem.findMany({where:{orderId:params.id}});
-    const comments=await db.comments.findMany({where:{orderId:params.id}});
-
-
+    const lineItem = await db.lineItem.findMany({
+      where: { orderId: params.id },
+    });
+    const comments = await db.comments.findMany({
+      where: { orderId: params.id },
+    });
 
     const response = await admin.graphql(
       `#graphql
       query GetOrder($orderId: ID!) {
         order(id: $orderId) {
             id
+
     note
     name
     lineItems(first:100){
       nodes{
         id
+        title
         sku 
         quantity
         originalTotalSet{presentmentMoney{amount}}
@@ -56,20 +68,18 @@ export async function loader({ request, params }) {
     }
         }
       }`,
-      { variables: { orderId: `gid://shopify/Order/${params.id}` } }
+      { variables: { orderId: `gid://shopify/Order/${params.id}` } },
     );
 
     const data = await response.json();
     return {
-        status: "success",
-        data:data.data.order,
-        lineItem:lineItem,
-        comments:comments
-      }
-
-
+      status: "success",
+      data: data.data.order,
+      lineItem: lineItem,
+      comments: comments,
+    };
   } catch (error) {
-      return {
+    return {
       status: "failed",
       error,
     };
@@ -80,39 +90,33 @@ export default function OrderPage() {
   const order = useLoaderData();
 
   const [lineItems, setLineItems] = useState([]);
-  const [comments, setComments] = useState([])
+  const [comments, setComments] = useState([]);
   useEffect(() => {
-    
     setLineItems(order.lineItem);
     setComments(order.comments);
 
-
-
-    console.log(order);
+    console.log(order.data);
   }, []);
 
   const submit = useSubmit();
 
   return (
     <Page title={`Order ${order.data?.name}`}>
-    <Card >
-    < >
-    {
-        order.data?<>
-        {
-            order.data.lineItems.nodes.map((item,index)=>{
-                return (<LineItem  data={item}/>)
-            })
-        }
-        
-        
-        </>:<><Spinner size="large"/></>
-    }
-    </>
-    </Card>
-  
-
-
+      <Card>
+        <>
+          {order.data ? (
+            <>
+              {order.data.lineItems.nodes.map((item, index) => {
+                return <LineItem data={item} key={index} />;
+              })}
+            </>
+          ) : (
+            <>
+              <Spinner size="large" />
+            </>
+          )}
+        </>
+      </Card>
     </Page>
   );
 }

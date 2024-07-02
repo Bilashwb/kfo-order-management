@@ -27,7 +27,7 @@ export default function LineItem({ data }) {
     ris: "",
     srd: "",
   });
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const handleToggle = useCallback(() => setOpen((open) => !open), []);
   const handleInputChange = (field) => (value) => {
@@ -72,8 +72,9 @@ export default function LineItem({ data }) {
         <InlineGrid columns={"2"} gap={"800"}>
           <Card>
             <Text>
-              {data.product.title} {data.variant.title}
+              {data.title}
             </Text>
+            <Text>{data.variant?data.variant.sku:""}</Text>
             <Text>
               {data.quantity} X ${" "}
               {data.originalUnitPriceSet.presentmentMoney.amount} =${" "}

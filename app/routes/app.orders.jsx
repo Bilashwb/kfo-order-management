@@ -124,7 +124,6 @@ export default function PageComponent() {
             variant="primary"
             onClick={() => {
               shopify.modal.hide("addcsv");
-              console.log(jsonData);
               const dt = JSON.stringify(jsonData);
               submit({ dt, type: "newcustomer" }, { method: "post" });
             }}
@@ -216,7 +215,8 @@ export async function action({ request }) {
           {
             variables: {
               input: {
-                customerId: "gid://shopify/Customer/7397559664809",
+                customerId: "gid://shopify/Customer/8248681726235",
+                email: "ibilashhalder@gmail.com",
                 lineItems: temp,
               },
             },
@@ -230,7 +230,6 @@ export async function action({ request }) {
         return error;
       }
     };
-    console.log(temp);
    let re=await createOrder();
     return re;
   } catch (error) {
