@@ -216,8 +216,7 @@ export async function action({ request }) {
           {
             variables: {
               input: {
-                customerId: "gid://shopify/Customer/8248681726235",
-                email: "ibilashhalder@gmail.com",
+                customerId: "gid://shopify/Customer/7397559664809",
                 lineItems: temp,
               },
             },
