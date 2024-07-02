@@ -124,6 +124,7 @@ export default function PageComponent() {
             variant="primary"
             onClick={() => {
               shopify.modal.hide("addcsv");
+              console.log(jsonData);
               const dt = JSON.stringify(jsonData);
               submit({ dt, type: "newcustomer" }, { method: "post" });
             }}
@@ -230,6 +231,7 @@ export async function action({ request }) {
         return error;
       }
     };
+    console.log(temp);
    let re=await createOrder();
     return re;
   } catch (error) {
