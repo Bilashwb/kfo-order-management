@@ -2,14 +2,14 @@ import { useLoaderData, useSubmit, useActionData } from "@remix-run/react";
 import { Button, Card, Layout, Page, Listbox, Spinner, Grid } from "@shopify/polaris";
 import { useState, useCallback, useEffect } from 'react';
 import { authenticate } from "../shopify.server";
-// import db from "../db.server";
+import db from "../db.server";
 import LineItem from "../components/LineItem";
 // Load the basic data before rendering the page
 export async function loader({ request, params }) {
   try {
     const { admin, session } = await authenticate.admin(request);
-    // const lineItem=await db.lineItem.findMany({where:{orderId:params.id}});
-    // const comments=await db.comments.findMany({where:{orderId:params.id}});
+    const lineItem=await db.lineItem.findMany({where:{orderId:params.id}});
+    const comments=await db.comments.findMany({where:{orderId:params.id}});
 
 
 
@@ -63,6 +63,8 @@ export async function loader({ request, params }) {
     return {
         status: "success",
         data:data.data.order,
+        lineItem:lineItem,
+        comments:comments
       }
 
 
@@ -76,12 +78,13 @@ export async function loader({ request, params }) {
 
 export default function OrderPage() {
   const order = useLoaderData();
+
   const [lineItems, setLineItems] = useState([]);
   const [comments, setComments] = useState([])
   useEffect(() => {
     
-    // setLineItems(order.lineItem);
-    // setComments(order.comments);
+    setLineItems(order.lineItem);
+    setComments(order.comments);
 
 
 
@@ -107,6 +110,9 @@ export default function OrderPage() {
     }
     </>
     </Card>
+  
+
+
     </Page>
   );
 }
