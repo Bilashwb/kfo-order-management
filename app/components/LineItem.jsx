@@ -71,13 +71,6 @@ export default function LineItem({ data }) {
       <Card roundedAbove="sm">
         <InlineGrid columns={"2"} gap={"800"}>
           <Card>
-            <Thumbnail
-              source={
-                data.variant.image
-                  ? data.variant.image.url
-                  : data.product.featuredImage?data.product.featuredImage.url:""
-              }
-            />
             <Text>
               {data.product.title} {data.variant.title}
             </Text>
