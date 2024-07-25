@@ -1,34 +1,17 @@
 import { useLoaderData, useSubmit, useActionData } from "@remix-run/react";
-import {
-  Button,
-  Card,
-  Layout,
-  Page,
-  Listbox,
-  Spinner,
-  Grid,
-} from "@shopify/polaris";
+import { Card, Page, Spinner } from "@shopify/polaris";
 import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
-import db from "../db.server";
 import LineItem from "../components/LineItem";
-// Load the basic data before rendering the page
+
 export async function loader({ request, params }) {
   try {
-    const { admin, session } = await authenticate.admin(request);
-    const lineItem = await db.lineItem.findMany({
-      where: { orderId: params.id },
-    });
-    const comments = await db.comments.findMany({
-      where: { orderId: params.id },
-    });
-
+    const { admin } = await authenticate.admin(request);
     const response = await admin.graphql(
       `#graphql
       query GetOrder($orderId: ID!) {
         order(id: $orderId) {
             id
-
     note
     name
     lineItems(first:100){
@@ -71,14 +54,31 @@ export async function loader({ request, params }) {
       { variables: { orderId: `gid://shopify/Order/${params.id}` } },
     );
 
+
     const data = await response.json();
+    console.log(data. data.order);
+    let comments  = await fetch("https://www.kitchenfactoryonline.com.au/shopifyapp/api/comment?orderId=" + params.id);
+    comments = await comments.json();
+    console.log(comments)
+    let infos  = await fetch("https://www.kitchenfactoryonline.com.au/shopifyapp/api/lineitem?orderId=" + params.id);
+    infos = await infos.json();
+    if(comments && comments.status=="success")
+      comments=comments.data;
+    else
+    comments=[];
+    if(infos && infos.status=="success")
+      infos=infos.data;
+    else
+    infos=[];
+
     return {
       status: "success",
       data: data.data.order,
-      lineItem: lineItem,
-      comments: comments,
+      comments,
+      infos
     };
   } catch (error) {
+    console.log(error)
     return {
       status: "failed",
       error,
@@ -88,18 +88,9 @@ export async function loader({ request, params }) {
 
 export default function OrderPage() {
   const order = useLoaderData();
-
-  const [lineItems, setLineItems] = useState([]);
-  const [comments, setComments] = useState([]);
   useEffect(() => {
-    setLineItems(order.lineItem);
-    setComments(order.comments);
-
-    console.log(order.data);
+    console.log("order Hello", order);
   }, []);
-
-  const submit = useSubmit();
-
   return (
     <Page title={`Order ${order.data?.name}`}>
       <Card>
@@ -107,7 +98,15 @@ export default function OrderPage() {
           {order.data ? (
             <>
               {order.data.lineItems.nodes.map((item, index) => {
-                return <LineItem data={item} key={index} />;
+                return (
+                  <LineItem
+                    data={item}
+                    key={index}
+                    orderId={order.data.id.substring(20)}
+                    comments={order.comments}
+                    infos={order.infos}
+                  />
+                );
               })}
             </>
           ) : (

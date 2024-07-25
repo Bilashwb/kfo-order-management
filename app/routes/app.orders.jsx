@@ -5,12 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import OrderTable from "../components/OrderTable";
 import OrderInput from "../components/OrderInput";
-function extractFloat(value) {
-  // Use regular expression to find the float value
-  const match = value.match(/[\d,]+(\.\d+)?/);
-  // If match is found, parse it as float and return, else return null
-  return match ? parseFloat(match[0].replace(/,/g, "")) : null;
-}
+
 // Load the basic data before rendering the page
 export async function loader({ request, params }) {
   try {
@@ -76,7 +71,6 @@ export async function loader({ request, params }) {
 export default function PageComponent() {
   const loaderData = useLoaderData();
   const act_data=useActionData();
-  console.log(act_data);
   if(act_data && act_data.data &&  act_data.data.draftOrderCreate &&  act_data.data.draftOrderCreate.draftOrder ){
     shopify.toast.show("Draft Order Created")
   }
@@ -108,11 +102,9 @@ export default function PageComponent() {
         },
       }}
     >
-      {orders.length > 0 ? (
+     
         <OrderTable data={orders} />
-      ) : (
-        <Spinner size="large" />
-      )}
+      
 
       <Modal id="addcsv" variant="base">
         <div style={{ padding: "3%" }}>
@@ -215,8 +207,8 @@ export async function action({ request }) {
           {
             variables: {
               input: {
-                customerId: "gid://shopify/Customer/8248681726235",
-                email: "ibilashhalder@gmail.com",
+                customerId: "gid://shopify/Customer/7397559664809",
+                email: "orders@kitchenfactoryonline.com.au",
                 lineItems: temp,
               },
             },

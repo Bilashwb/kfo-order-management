@@ -1,10 +1,8 @@
 import { Modal, TitleBar, useAppBridge } from "@shopify/app-bridge-react";
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChatIcon } from "@shopify/polaris-icons";
 import {
-  BlockStack,
   CalloutCard,
-  Thumbnail,
   Select,
   FormLayout,
   TextField,
@@ -14,11 +12,12 @@ import {
   InlineStack,
   Collapsible,
   Button,
+  Spinner,
 } from "@shopify/polaris";
 import { EditIcon } from "@shopify/polaris-icons";
 import MessageBox from "./MessageBox";
 
-export default function LineItem({ data }) {
+export default function LineItem(props) {
   const shopify = useAppBridge();
   const [input, setInput] = useState({
     inventoryType: "",
@@ -26,7 +25,98 @@ export default function LineItem({ data }) {
     spd: "",
     ris: "",
     srd: "",
+    id:null,
   });
+
+
+
+
+  const [comments, setComments] = useState([]);
+  const [info, setInfo] = useState(null)
+  const [data, setData] = useState(null)
+
+
+  useEffect(() => {
+    setComments(props.comments.filter(item => item.lineItemId === props.data.id.substring(23)));
+    setInfo(props.infos.filter(item => item.lineItemId === props.data.id.substring(23)));
+    setData(props.data);
+    let tmp=props.infos.filter(item => item.lineItemId === props.data.id.substring(23));
+     if(tmp.length){
+      setInput({
+       inventoryType: tmp[0].inventoryType,
+       status: tmp[0].status,
+       spd:tmp[0].promiseDate    ,
+       ris: tmp[0].reciveStock,
+       srd: tmp[0].readyDate,    
+       id:tmp[0].id,
+      }) 
+     }
+  
+  }, [])
+  
+
+
+  
+  const updateStatus = useCallback(() => {
+    console.log("Update Calll")
+    let reqdata = JSON.stringify({
+      lineItemId: data.id.substring(23),
+      inventoryType: input.inventoryType,
+      orderId: props.orderId,
+      status: input.status,
+      promiseDate: input.spd,
+      reciveStock: input.ris,
+      readyDate: input.srd,
+      id:input.id
+    });
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    const requestOptions = {
+      method: "PUT",
+      headers: myHeaders,
+      body: reqdata,
+    };
+    fetch("(https://www.kitchenfactoryonline.com.au/shopifyapp/api/lineitem", requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result)
+        shopify.modal.hide("m" + data.id.substr(23))
+        shopify.toast.show("Data Updated");
+      })
+      .catch((error) => console.error(error));
+  });
+
+
+
+  const saveStatus = useCallback(() => {
+
+    let reqdata = JSON.stringify({
+      lineItemId: data.id.substring(23),
+      inventoryType: input.inventoryType,
+      orderId: props.orderId,
+      status: input.status,
+      promiseDate: input.spd,
+      reciveStock: input.ris,
+      readyDate: input.srd,
+    });
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: reqdata,
+    };
+    fetch("https://www.kitchenfactoryonline.com.au/shopifyapp/api/lineitem", requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        shopify.modal.hide("m" + data.id.substr(23))
+        shopify.toast.show("Status Updated");
+      })
+      .catch((error) => console.error(error));
+  });
+
   const [open, setOpen] = useState(false);
 
   const handleToggle = useCallback(() => setOpen((open) => !open), []);
@@ -68,13 +158,13 @@ export default function LineItem({ data }) {
 
   return (
     <div style={{ margin: "1%" }}>
-      <Card roundedAbove="sm">
+     {
+      data?<>
+       <Card roundedAbove="sm">
         <InlineGrid columns={"2"} gap={"800"}>
           <Card>
-            <Text>
-              {data.title}
-            </Text>
-            <Text>{data.variant?data.variant.sku:""}</Text>
+            <Text>{data.title}</Text>
+            <Text>{data.variant ? data.variant.sku : ""}</Text>
             <Text>
               {data.quantity} X ${" "}
               {data.originalUnitPriceSet.presentmentMoney.amount} =${" "}
@@ -137,7 +227,7 @@ export default function LineItem({ data }) {
         </InlineGrid>
         <div style={{ marginTop: "1%" }}>
           <Button onClick={handleToggle} icon={ChatIcon} variant="secondary">
-            Items Comments
+            Items Comments {comments.length?<span style={{color:"blue"}}>( {comments.length} )</span>:""}
           </Button>
           <Collapsible
             open={open}
@@ -145,7 +235,7 @@ export default function LineItem({ data }) {
             transition={{ duration: "500ms", timingFunction: "ease-in-out" }}
             expandOnPrint
           >
-            <MessageBox />
+            <MessageBox data={comments} lineItemId={props.data.id.substring(23)}  orderId={props.orderId}/>
           </Collapsible>
         </div>
       </Card>
@@ -196,11 +286,19 @@ export default function LineItem({ data }) {
         </div>
 
         <TitleBar title={"Line Item " + data.id.substr(23)}>
-          <button variant="primary" onClick={() => console.log(input)}>
+          {
+            input.id?<button variant="primary" onClick={()=>{
+              console.log("btnnn")
+              updateStatus()}}>
+            Update
+          </button>:<button variant="primary" onClick={()=>{saveStatus()}}>
             Save
           </button>
+          }
         </TitleBar>
       </Modal>
+      </>:<Spinner/>
+     }
     </div>
   );
 }

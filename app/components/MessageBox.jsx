@@ -1,82 +1,91 @@
-import { useState } from "react";
-import {
-  Card,
-  TextField,
-  Button,
-  TextContainer,
-  Avatar,
-  Text,
-} from "@shopify/polaris";
+import React, { useEffect, useState } from 'react';
+import { Card, List, Spinner, TextField, Button, InlineStack, FormLayout } from '@shopify/polaris';
 
-export default function MessageBox() {
-  const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! How can I help you today?" },
-  ]);
-  const [newMessage, setNewMessage] = useState("");
+export default function (props) {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() === "") return;
+  useEffect(() => {
+    setMessages(props.data)
+  //  fetchMessages();
+  }, []);
 
-    const newMessages = [
-      ...messages,
-      { sender: "user", text: newMessage.trim() },
-    ];
-    setMessages(newMessages);
-    setNewMessage("");
+  
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse = generateBotResponse(newMessage);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { sender: "bot", text: botResponse },
-      ]);
-    }, 1000);
-  };
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+    setSending(true);
 
-  const generateBotResponse = (userMessage) => {
-    return "Hello I am Admin. You said: " + userMessage;
+    try {
+      // Replace with your API endpoint to send messages
+      const response = await fetch('https://www.kitchenfactoryonline.com.au/shopifyapp/api/comment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: newMessage,
+          lineItemId:props.lineItemId,
+          orderId:props.orderId,
+          admin: "1", 
+        }),
+      });
+
+      if (response.ok) {
+        setNewMessage('');
+        fetchMessages(); // Fetch messages again to include the new message
+      } else {
+        console.error('Error sending message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
-    <Card sectioned>
-      <TextContainer>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {messages.map((message, index) => (
-            <Message key={index} message={message} />
-          ))}
-        </div>
-      </TextContainer>
-      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-        <TextField
-          value={newMessage}
-          onChange={(value) => setNewMessage(value)}
-          placeholder="Type a message"
-          onKeyPress={(event) => {
-            if (event.key === "Enter") {
-              handleSendMessage();
-            }
-          }}
-        />
-        <Button primary onClick={handleSendMessage}>
-          Send
-        </Button>
-      </div>
+    <Card   roundedAbove=''>
+      {loading ? (
+        <Spinner  size="large" />
+      ) : (
+        <>
+          <List type="bullet">
+            {messages.map(message => (
+              <List.Item key={message.id}>
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>{message.admin === "1" ? 'Admin' : 'User'}:</strong> {message.message}
+                </div>
+                <div style={{ fontSize: '12px', color: 'gray' }}>
+                  {new Date(message.createdAt).toLocaleString()}
+                </div>
+              </List.Item>
+            ))}
+          </List>
+          <div style={{ marginTop: '20px' }}>
+         
+             
+              <FormLayout>
+              <TextField
+
+label="New Message"
+value={newMessage}
+onChange={(value) => setNewMessage(value)}
+autoComplete="off"
+multiline={3}
+/>
+
+
+<Button onClick={handleSendMessage} loading={sending} variant='primary'>Send</Button>
+
+              </FormLayout>
+          </div>
+        </>
+      )}
     </Card>
   );
-}
+};
 
-function Message({ message }) {
-  const isUser = message.sender === "user";
-  const alignment = isUser ? "flex-end" : "flex-start";
 
-  return (
-    <div style={{ display: "flex", justifyContent: alignment, marginBottom: "10px" }}>
-      {!isUser && <Avatar customer size="sm" />}
-   
-        <Text variant="bodyMd">{message.text}</Text>
-     
-      {isUser && <Avatar source="https://avatars.githubusercontent.com/u/57936" customer size="sm" />}
-    </div>
-  );
-}
