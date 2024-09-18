@@ -70,12 +70,13 @@ export async function loader({ request, params }) {
 
 export default function PageComponent() {
   const loaderData = useLoaderData();
-  const act_data=useActionData();
-  if(act_data && act_data.data &&  act_data.data.draftOrderCreate &&  act_data.data.draftOrderCreate.draftOrder ){
-    shopify.toast.show("Draft Order Created")
-  }
+  const act_data = useActionData();
+
+  // State variables for loading and error
   const [orders, setOrders] = useState([]);
   const [jsonData, setJsonData] = useState(null);
+  const [loading, setLoading] = useState(false); // For spinner
+  const [error, setError] = useState(null); // For error
 
   const showInput = useCallback((data) => {
     setJsonData(data);
@@ -86,12 +87,30 @@ export default function PageComponent() {
       setOrders(loaderData.data);
     } else {
       console.error("Error loading data:", loaderData.error);
-      // Assuming `shopify.toast.show` is available globally
       shopify.toast.show("Something went wrong while loading orders.");
     }
   }, [loaderData]);
 
+  useEffect(() => {
+    if (act_data && act_data.data && act_data.data.draftOrderCreate && act_data.data.draftOrderCreate.draftOrder) {
+      shopify.toast.show("Draft Order Created");
+      setLoading(false); // Stop spinner on success
+    }
+  }, [act_data]);
+
   const submit = useSubmit();
+
+  const handleSaveOrder = () => {
+    setLoading(true); // Start spinner
+    setError(null); // Reset error
+    const dt = JSON.stringify(jsonData);
+    submit({ dt, type: "newcustomer" }, { method: "post" }).catch((err) => {
+      setLoading(false); // Stop spinner on error
+      setError("Failed to create draft order.");
+      shopify.toast.show("Error creating order: " + err.message);
+    });
+  };
+
   return (
     <Page
       title="Manage Order"
@@ -102,9 +121,12 @@ export default function PageComponent() {
         },
       }}
     >
-     
+      {/* Show spinner while loading */}
+      {loading ? (
+        <Spinner accessibilityLabel="Loading..." size="large" />
+      ) : (
         <OrderTable data={orders} />
-      
+      )}
 
       <Modal id="addcsv" variant="base">
         <div style={{ padding: "3%" }}>
@@ -116,24 +138,27 @@ export default function PageComponent() {
             variant="primary"
             onClick={() => {
               shopify.modal.hide("addcsv");
-              const dt = JSON.stringify(jsonData);
-              submit({ dt, type: "newcustomer" }, { method: "post" });
+              handleSaveOrder(); // Trigger save order function
             }}
           >
             Save
           </button>
         </TitleBar>
       </Modal>
+
+      {/* Display error toast if an error occurs */}
+      {error && <div>{shopify.toast.show(error)}</div>}
     </Page>
   );
 }
 
-// Handle all the requests
+
 export async function action({ request }) {
   try {
     const { admin, session } = await authenticate.admin(request);
     const dt = { ...Object.fromEntries(await request.formData()) };
     const items = JSON.parse(dt.dt);
+    const note = items[0].Job_Number;
 
     const fetchProductVariants = async (sku) => {
       console.log(sku);
@@ -169,14 +194,17 @@ export async function action({ request }) {
 
     let temp = [];
     results.forEach((item, index) => {
-      let qt=parseInt(items[index].Qty);
-      if(qt<1)
-        qt=999;
+      let qt = parseInt(items[index].Qty);
+      if (qt < 1) qt = 999;
 
       if (item.data.productVariants.nodes.length > 0) {
         temp.push({
           variantId: item.data.productVariants.nodes[0].id,
           quantity: qt,
+          customAttributes: {
+            key: "Description",
+            value: items[index].Description,
+          },
         });
       } else {
         if (items[index].Mat_id) {
@@ -188,25 +216,31 @@ export async function action({ request }) {
                 : 0,
             ),
             quantity: qt,
+            customAttributes: {
+              key: "Description",
+              value: items[index].Description,
+            },
           });
         }
       }
     });
+
     const createOrder = async () => {
       try {
         const response = await admin.graphql(
           `#graphql
           mutation draftOrderCreate($input: DraftOrderInput!) {
-  draftOrderCreate(input: $input) {
-    draftOrder {
-      id
-    }
-  }
-}
+            draftOrderCreate(input: $input) {
+              draftOrder {
+                id
+              }
+            }
+          }
         `,
           {
             variables: {
               input: {
+                note: note,
                 customerId: "gid://shopify/Customer/7397559664809",
                 email: "orders@kitchenfactoryonline.com.au",
                 lineItems: temp,
@@ -218,11 +252,12 @@ export async function action({ request }) {
         const data = await response.json();
         return data;
       } catch (error) {
-        console.error(`Error Creating`, error);
+        console.error("Error Creating", error);
         return error;
       }
     };
-   let re=await createOrder();
+
+    let re = await createOrder();
     return re;
   } catch (error) {
     console.error("Error in action function:", error);
