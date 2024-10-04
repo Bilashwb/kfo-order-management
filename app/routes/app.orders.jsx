@@ -169,6 +169,7 @@ export async function action({ request }) {
     const dt = { ...Object.fromEntries(await request.formData()) };
     const items = JSON.parse(dt.dt);
     const note = items[0].Job_Number;
+    let customer=null;
     const customer_email=items[0].Customer_Email;
     let customer_type="";
     if(customer_email){
@@ -193,6 +194,9 @@ export async function action({ request }) {
       );
 
       const data = await response.json();
+      if(data.data.customers.edges.length){
+        customer=data.data.customers.edges[0];
+      }
       if(data.data.customers.edges.length>0 && data.data.customers.edges[0].node.tags.length>0){
         customer_type=data.data.customers.edges[0].node.tags[0];
       }
@@ -307,8 +311,8 @@ export async function action({ request }) {
             variables: {
               input: {
                 note: note,
-                customerId: "gid://shopify/Customer/7756782960794",
-                email: "test.user@shopify.com",
+                customerId: customer.id,
+                email: customer.email,
                 lineItems: temp,
               },
             },
