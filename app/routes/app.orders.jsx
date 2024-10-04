@@ -10,6 +10,7 @@ import OrderInput from "../components/OrderInput";
 export async function loader({ request, params }) {
   try {
     const { admin, session } = await authenticate.admin(request);
+  
 
     const response = await admin.graphql(`#graphql
       query {
@@ -154,14 +155,60 @@ export default function PageComponent() {
 
 
 export async function action({ request }) {
+
+  function getDiscount(data,collectionName,type) {
+    const item = data.find(obj => obj.collection === collectionName);
+    return item && item[type] ? item[type] : 0;
+  }
+
+  
+
+
   try {
     const { admin, session } = await authenticate.admin(request);
     const dt = { ...Object.fromEntries(await request.formData()) };
     const items = JSON.parse(dt.dt);
     const note = items[0].Job_Number;
+    const customer_email=items[0].Customer_Email;
+    let customer_type="";
+    if(customer_email){
+      const response = await admin.graphql(`#graphql
+       query GetCustomerByEmail($email: String!) {
+  customers(first: 1, query: $email) {
+    edges {
+      node {
+        id
+        tags
+        email
+      }
+    }
+  }
+}
+      `,
+        {
+          variables: {
+            email: customer_email,
+          },
+        },
+      );
+
+      const data = await response.json();
+      if(data.data.customers.edges.length>0 && data.data.customers.edges[0].node.tags.length>0){
+        customer_type=data.data.customers.edges[0].node.tags[0];
+      }
+    }
+   
+
+    let discounts = await fetch("https://www.kitchenfactoryonline.com.au/shopifyapp/api/discount");
+    discounts = await discounts.json();
+    //console.log(discounts.data,customer_type)
+    
+
+
+
 
     const fetchProductVariants = async (sku) => {
-      console.log(sku);
+
       try {
         const response = await admin.graphql(
           `#graphql
@@ -169,6 +216,8 @@ export async function action({ request }) {
             productVariants(first: 1, query: $sku) {
               nodes {
                 id
+                product{
+                tags }
               }
             }
           }
@@ -194,10 +243,13 @@ export async function action({ request }) {
 
     let temp = [];
     results.forEach((item, index) => {
+  
       let qt = parseInt(items[index].Qty);
       if (qt < 1) qt = 999;
 
       if (item.data.productVariants.nodes.length > 0) {
+        let discountamount=getDiscount(discounts.data,item.data.productVariants.nodes[0].product.tags[0],customer_type);
+       if(discountamount>0){
         temp.push({
           variantId: item.data.productVariants.nodes[0].id,
           quantity: qt,
@@ -205,7 +257,20 @@ export async function action({ request }) {
             key: "Description",
             value: items[index].Description,
           },
+          appliedDiscount:{value:  20,valueType: "PERCENTAGE"}
         });
+       }
+       else{
+        temp.push({
+          variantId: item.data.productVariants.nodes[0].id,
+          quantity: qt,
+          customAttributes: {
+            key: "Description",
+            value: items[index].Description,
+          }
+        });
+       }
+        
       } else {
         if (items[index].Mat_id) {
           temp.push({
@@ -225,6 +290,7 @@ export async function action({ request }) {
       }
     });
 
+   // console.log(temp)
     const createOrder = async () => {
       try {
         const response = await admin.graphql(
@@ -241,8 +307,8 @@ export async function action({ request }) {
             variables: {
               input: {
                 note: note,
-                customerId: "gid://shopify/Customer/7397559664809",
-                email: "orders@kitchenfactoryonline.com.au",
+                customerId: "gid://shopify/Customer/7756782960794",
+                email: "test.user@shopify.com",
                 lineItems: temp,
               },
             },
@@ -258,7 +324,8 @@ export async function action({ request }) {
     };
 
     let re = await createOrder();
-    return re;
+   return re;
+   //return null;
   } catch (error) {
     console.error("Error in action function:", error);
     return {
