@@ -194,9 +194,9 @@ export async function action({ request }) {
       );
 
       const data = await response.json();
-      if(data.data.customers.edges.length){
-        customer=data.data.customers.edges[0];
-      }
+      if(data.data.customers.edges.length>0)
+        customer=data.data.customers.edges[0].node;
+      
       if(data.data.customers.edges.length>0 && data.data.customers.edges[0].node.tags.length>0){
         customer_type=data.data.customers.edges[0].node.tags[0];
       }
