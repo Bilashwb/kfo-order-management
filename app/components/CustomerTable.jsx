@@ -44,7 +44,6 @@ export default function({data}) {
                 <IndexTable.Cell>{node.verifiedEmail ? "Yes" : "No"}</IndexTable.Cell>
                 <IndexTable.Cell>{node.metafield ? node.metafield.value : ""}</IndexTable.Cell>
                 <IndexTable.Cell>{node.defaultAddress ? node.defaultAddress.city : ""}</IndexTable.Cell>
-                <IndexTable.Cell><Button icon={ViewIcon}></Button></IndexTable.Cell>
             </IndexTable.Row>
         ),
     );
@@ -71,7 +70,6 @@ export default function({data}) {
                     {title: 'Email Verified'},
                     {title: 'Customer Type'},
                     {title: 'Address'},
-                    {title: 'View'},
                 ]}
             >
                 {rowMarkup}

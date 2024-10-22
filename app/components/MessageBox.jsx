@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Card, List, Spinner, TextField, Button, InlineStack, FormLayout } from '@shopify/polaris';
 
 export default function (props) {
+  console.log(props)
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    console.log(props)
     setMessages(props.data)
   //  fetchMessages();
   }, []);
@@ -27,7 +29,7 @@ export default function (props) {
         },
         body: JSON.stringify({
           message: newMessage,
-          lineItemId:props.lineItemId,
+          lineItemId:props.category          ,
           orderId:props.orderId,
           admin: "1", 
         }),

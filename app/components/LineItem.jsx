@@ -15,7 +15,7 @@ import {
   Spinner,
 } from "@shopify/polaris";
 import { EditIcon } from "@shopify/polaris-icons";
-import MessageBox from "./MessageBox";
+import MessageBox from "./MessageBox.jsx";
 
 export default function LineItem(props) {
   const shopify = useAppBridge();

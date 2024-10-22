@@ -16,7 +16,7 @@ export async function loader({ request, params }) {
     const response = await admin.graphql(
       `#graphql
     query {
-      customers(first: 10) {
+      customers(first: 100) {
         edges {
           node {
             id
@@ -36,6 +36,7 @@ export async function loader({ request, params }) {
       }
     }`,
     );
+   
 
     const data = await response.json();
     return {
@@ -54,6 +55,7 @@ export default function page() {
   const loader_data = useLoaderData();
   const [customers, setCustomers] = useState([]);
   useEffect(() => {
+    console.log(loader_data)
     if (loader_data.status == "success") {
       setCustomers(loader_data.data);
     } else {
@@ -77,11 +79,7 @@ export default function page() {
       ]}
 
     >
-      {customers.length > 0 ? (
-        <CustomerTable data={customers} />
-      ) : (
-        <Spinner size="large" />
-      )}
+      <CustomerTable data={customers}/>
     </Page>
   );
 }
